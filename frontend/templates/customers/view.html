@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}{{ customer.name }} - Customer Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-user me-2"></i>{{ customer.name }}</h1>
+    <div>
+        <a href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}" class="btn btn-warning">
+            <i class="fas fa-edit me-2"></i>Edit
+        </a>
+        <a href="{{ url_for('customers.list_customers') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to List
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Customer Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Contact Information</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Name:</strong></td>
+                                <td>{{ customer.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td><a href="mailto:{{ customer.email }}">{{ customer.email }}</a></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phone:</strong></td>
+                                <td>
+                                    {% if customer.phone %}
+                                        <a href="tel:{{ customer.phone }}">{{ customer.phone }}</a>
+                                    {% else %}
+                                        <span class="text-muted">Not provided</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Company:</strong></td>
+                                <td>{{ customer.company or 'Not provided' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Website:</strong></td>
+                                <td>
+                                    {% if customer.website %}
+                                        <a href="{{ customer.website }}" target="_blank">{{ customer.website }}</a>
+                                    {% else %}
+                                        <span class="text-muted">Not provided</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Additional Information</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Created:</strong></td>
+                                <td>{{ customer.created_at.strftime('%B %d, %Y') if customer.created_at else 'Unknown' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Updated:</strong></td>
+                                <td>{{ customer.updated_at.strftime('%B %d, %Y') if customer.updated_at else 'Unknown' }}</td>
+                            </tr>
+                        </table>
+                        
+                        {% if customer.address %}
+                        <h6>Address</h6>
+                        <p class="text-muted">{{ customer.address }}</p>
+                        {% endif %}
+                        
+                        {% if customer.notes %}
+                        <h6>Notes</h6>
+                        <p class="text-muted">{{ customer.notes }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar me-2"></i>Quick Stats</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="row">
+                    <div class="col-6">
+                        <h3 class="text-primary">0</h3>
+                        <small class="text-muted">Invoices</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-success">$0.00</h3>
+                        <small class="text-muted">Total Paid</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('invoices.create_invoice') }}?customer_id={{ customer.id }}" class="btn btn-primary">
+                        <i class="fas fa-file-invoice me-2"></i>Create Invoice
+                    </a>
+                    <a href="#" class="btn btn-success">
+                        <i class="fas fa-quote-left me-2"></i>Create Quote
+                    </a>
+                    <a href="mailto:{{ customer.email }}" class="btn btn-info">
+                        <i class="fas fa-envelope me-2"></i>Send Email
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - IDURAR ERP/CRM{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div x-data="dashboardApp()" x-init="init()">
+    <!-- Loading State -->
+    <div x-show="loading" class="flex items-center justify-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <span class="ml-3 text-gray-600">Loading dashboard...</span>
+    </div>
+
+    <!-- Error State -->
+    <div x-show="error && !loading" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-circle text-red-600 mr-2"></i>
+                <span class="text-red-800" x-text="error"></span>
+            </div>
+            <button x-show="error.includes('log in')" @click="showLoginModal = true" class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">
+                Login
+            </button>
+        </div>
+    </div>
+
+    <!-- Welcome Section -->
+    <div x-show="!loading" class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900">Good morning, {{ user.full_name or user.email }}!</h2>
+                <p class="text-gray-600 mt-1">Here's what's happening with your business today.</p>
+            </div>
+            <div class="text-right">
+                <p class="text-sm text-gray-500" x-text="currentDate"></p>
+                <p class="text-lg font-semibold text-gray-900" x-text="currentDay"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div x-show="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Customers Card -->
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium">Total Customers</p>
+                    <p class="text-3xl font-bold" x-text="customersData.result?.total || 0"></p>
+                    <p class="text-blue-100 text-xs mt-1" x-text="(customersData.result?.new || 0) + ' New This Month'"></p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-lg p-3">
+                    <i class="fas fa-users text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoices Card -->
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm font-medium">Total Invoices</p>
+                    <p class="text-3xl font-bold" x-text="'$' + (invoicesData.result?.total || 0).toFixed(0)"></p>
+                    <p class="text-green-100 text-xs mt-1" x-text="'$' + (invoicesData.result?.total_undue || 0).toFixed(0) + ' Unpaid'"></p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-lg p-3">
+                    <i class="fas fa-file-invoice text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quotes Card -->
+        <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-yellow-100 text-sm font-medium">Total Quotes</p>
+                    <p class="text-3xl font-bold" x-text="'$' + (quotesData.result?.total || 0).toFixed(0)"></p>
+                    <p class="text-yellow-100 text-xs mt-1" x-text="'This ' + (quotesData.result?.type || 'month')"></p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-lg p-3">
+                    <i class="fas fa-quote-left text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments Card -->
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium">Payments</p>
+                    <p class="text-3xl font-bold" x-text="paymentsData.result?.count || 0"></p>
+                    <p class="text-purple-100 text-xs mt-1" x-text="'$' + (paymentsData.result?.total || 0).toFixed(0) + ' Total'"></p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-lg p-3">
+                    <i class="fas fa-credit-card text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Charts -->
+    <div x-show="!loading" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Invoice Performance -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-chart-pie text-primary-600 mr-2"></i>
+                    Invoice Performance
+                </h3>
+            </div>
+            <div class="p-6">
+                <template x-if="invoicesData.result?.performance && invoicesData.result.performance.length > 0">
+                    <div class="space-y-4">
+                        <template x-for="status in invoicesData.result.performance" :key="status.status">
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium text-gray-700 capitalize" x-text="status.status"></span>
+                                    <span class="text-sm font-semibold text-gray-900" x-text="status.percentage + '%'"></span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full transition-all duration-300"
+                                         :class="{
+                                             'bg-green-500': status.status === 'paid',
+                                             'bg-yellow-500': status.status === 'pending',
+                                             'bg-red-500': status.status === 'overdue',
+                                             'bg-blue-500': !['paid', 'pending', 'overdue'].includes(status.status)
+                                         }"
+                                         :style="'width: ' + status.percentage + '%'"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                <template x-if="!invoicesData.result?.performance || invoicesData.result.performance.length === 0">
+                    <div class="text-center py-8">
+                        <i class="fas fa-chart-pie text-gray-300 text-4xl mb-4"></i>
+                        <p class="text-gray-500">No invoice data available</p>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Quote Performance -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-chart-bar text-primary-600 mr-2"></i>
+                    Quote Performance
+                </h3>
+            </div>
+            <div class="p-6">
+                <template x-if="quotesData.result?.performance && quotesData.result.performance.length > 0">
+                    <div class="space-y-4">
+                        <template x-for="status in quotesData.result.performance" :key="status.status">
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium text-gray-700 capitalize" x-text="status.status"></span>
+                                    <span class="text-sm font-semibold text-gray-900" x-text="status.percentage + '%'"></span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full transition-all duration-300"
+                                         :class="{
+                                             'bg-green-500': status.status === 'accepted',
+                                             'bg-yellow-500': status.status === 'pending',
+                                             'bg-red-500': status.status === 'declined',
+                                             'bg-blue-500': !['accepted', 'pending', 'declined'].includes(status.status)
+                                         }"
+                                         :style="'width: ' + status.percentage + '%'"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                <template x-if="!quotesData.result?.performance || quotesData.result.performance.length === 0">
+                    <div class="text-center py-8">
+                        <i class="fas fa-chart-bar text-gray-300 text-4xl mb-4"></i>
+                        <p class="text-gray-500">No quote data available</p>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+<!-- Quick Actions -->
+<div class="bg-white rounded-xl shadow-lg border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="fas fa-bolt text-primary-600 mr-2"></i>
+            Quick Actions
+        </h3>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="/clients/create" class="group flex items-center justify-center px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200 text-sm font-medium">
+                <i class="fas fa-user-plus mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                Add Client
+            </a>
+            <a href="/invoices/create" class="group flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-medium">
+                <i class="fas fa-file-invoice mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                Create Invoice
+            </a>
+            <a href="/payments/create" class="group flex items-center justify-center px-4 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200 text-sm font-medium">
+                <i class="fas fa-credit-card mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                Record Payment
+            </a>
+            <a href="/clients" class="group flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium">
+                <i class="fas fa-list mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                View All
+            </a>
+        </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function dashboardApp() {
+    return {
+        // State
+        loading: true,
+        error: null,
+        authToken: localStorage.getItem('authToken'),
+        customersData: { result: null },
+        invoicesData: { result: null },
+        quotesData: { result: null },
+        paymentsData: { result: null },
+
+        // Computed properties
+        get currentDate() {
+            const now = new Date();
+            return now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        },
+
+        get currentDay() {
+            const now = new Date();
+            return now.toLocaleDateString('en-US', { weekday: 'long' });
+        },
+
+        // Methods
+        async init() {
+            // Load dashboard data directly without authentication for demo
+            await this.fetchDashboardData();
+        },
+
+        async fetchDashboardData() {
+            try {
+                this.loading = true;
+                this.error = null;
+
+                // Fetch all dashboard data in parallel using public endpoints
+                const [customersResponse, invoicesResponse, quotesResponse, paymentsResponse] = await Promise.all([
+                    this.fetchData('/api/v1/dashboard/customers/summary?type=month'),
+                    this.fetchData('/api/v1/dashboard/invoices/summary?type=month'),
+                    this.fetchData('/api/v1/dashboard/quotes/summary?type=month'),
+                    this.fetchData('/api/v1/dashboard/payments/summary?type=month')
+                ]);
+
+                this.customersData = customersResponse || { result: null };
+                this.invoicesData = invoicesResponse || { result: null };
+                this.quotesData = quotesResponse || { result: null };
+                this.paymentsData = paymentsResponse || { result: null };
+
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+                this.error = 'Failed to load dashboard data. Please try again.';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchData(url) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching ${url}:`, error);
+                return null;
+            }
+        },
+
+        async refreshDashboard() {
+            await this.fetchDashboardData();
+        },
+
+        showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    }
+}
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add some interactive effects
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate progress bars
+        const progressBars = document.querySelectorAll('.progress-bar');
+        progressBars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.transition = 'width 1s ease-in-out';
+                bar.style.width = width;
+            }, 500);
+        });
+        
+        // Add hover effects to stats cards
+        const statsCards = document.querySelectorAll('.stats-card');
+        statsCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px) scale(1.02)';
+                this.style.transition = 'all 0.3s ease';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    });
+</script>
+{% endblock %}

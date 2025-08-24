@@ -1,0 +1,497 @@
+{% extends "base.html" %}
+
+{% block title %}Payments - IDURAR ERP/CRM{% endblock %}
+{% block page_title %}Payments{% endblock %}
+
+{% block content %}
+<div x-data="paymentsApp()" x-init="init()">
+    <!-- Loading State -->
+    <div x-show="loading" class="flex items-center justify-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <span class="ml-3 text-gray-600">Loading payments...</span>
+    </div>
+
+    <!-- Error State -->
+    <div x-show="error && !loading" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-circle text-red-600 mr-2"></i>
+                <span class="text-red-800" x-text="error"></span>
+            </div>
+            <button x-show="error.includes('log in')" @click="showLoginModal = true" class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">
+                Login
+            </button>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div x-show="showLoginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-transition>
+        <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+            <h3 class="text-lg font-semibold mb-4">Login Required</h3>
+            <form @submit.prevent="login()">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" x-model="loginForm.email" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" x-model="loginForm.password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" @click="showLoginModal = false" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                        Cancel
+                    </button>
+                    <button type="submit" :disabled="loginLoading" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50">
+                        <span x-show="!loginLoading">Login</span>
+                        <span x-show="loginLoading">Logging in...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <div x-show="!loading" class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+        <div class="mb-4 sm:mb-0">
+            <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-credit-card text-primary-600 mr-3"></i>
+                Payment Management
+            </h2>
+            <p class="text-gray-600 mt-1">Track and manage your payments and transactions</p>
+        </div>
+        <div class="flex space-x-3">
+            <button @click="exportPayments()" class="px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                <i class="fas fa-download mr-2"></i>Export
+            </button>
+            <button @click="showCreateModal = true" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200 flex items-center">
+                <i class="fas fa-plus mr-2"></i>Record Payment
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div x-show="!loading && payments.length > 0" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Total Payments -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Payments</p>
+                    <p class="text-3xl font-bold text-gray-900" x-text="payments.length"></p>
+                </div>
+                <div class="bg-blue-100 rounded-lg p-3">
+                    <i class="fas fa-credit-card text-blue-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Amount -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Amount</p>
+                    <p class="text-3xl font-bold text-gray-900" x-text="'$' + totalAmount.toFixed(2)"></p>
+                </div>
+                <div class="bg-green-100 rounded-lg p-3">
+                    <i class="fas fa-dollar-sign text-green-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- This Month -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">This Month</p>
+                    <p class="text-3xl font-bold text-gray-900" x-text="'$' + monthlyAmount.toFixed(2)"></p>
+                </div>
+                <div class="bg-purple-100 rounded-lg p-3">
+                    <i class="fas fa-calendar text-purple-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Payment -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Average Payment</p>
+                    <p class="text-3xl font-bold text-gray-900" x-text="'$' + averageAmount.toFixed(2)"></p>
+                </div>
+                <div class="bg-yellow-100 rounded-lg p-3">
+                    <i class="fas fa-chart-line text-yellow-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payments Table -->
+    <div x-show="!loading" class="bg-white rounded-xl shadow-lg border border-gray-200">
+        <!-- Table Header -->
+        <div class="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center mb-4 sm:mb-0">
+                <i class="fas fa-list text-primary-600 mr-2"></i>
+                Payment Directory
+            </h3>
+            <div class="flex items-center space-x-3">
+                <div class="relative">
+                    <input type="text"
+                           x-model="searchTerm"
+                           placeholder="Search payments..."
+                           class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 w-64">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+                <button @click="refreshPayments()" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-refresh"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Table Content -->
+        <div class="overflow-x-auto">
+            <template x-if="filteredPayments.length > 0">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="payment in filteredPayments" :key="payment.id">
+                            <tr class="hover:bg-gray-50 transition-colors duration-200">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                                                <i class="fas fa-credit-card text-green-600"></i>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900" x-text="'Payment #' + payment.id"></div>
+                                            <div class="text-sm text-gray-500" x-text="payment.reference || 'No reference'"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <template x-if="payment.invoice_id">
+                                        <div class="text-sm font-medium text-primary-600 hover:text-primary-900 cursor-pointer"
+                                             @click="viewInvoice(payment.invoice_id)"
+                                             x-text="'Invoice #' + payment.invoice_id"></div>
+                                    </template>
+                                    <template x-if="!payment.invoice_id">
+                                        <span class="text-gray-400">-</span>
+                                    </template>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-lg font-bold text-green-600" x-text="'$' + parseFloat(payment.amount || 0).toFixed(2)"></div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900" x-text="formatDate(payment.payment_date || payment.created_at)"></div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
+                                          x-text="payment.payment_method || 'Cash'"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex space-x-2">
+                                        <button @click="viewPayment(payment)"
+                                               class="text-primary-600 hover:text-primary-900 p-2 hover:bg-primary-50 rounded-lg transition-colors duration-200"
+                                               title="View Payment">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button @click="editPayment(payment)"
+                                               class="text-yellow-600 hover:text-yellow-900 p-2 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
+                                               title="Edit Payment">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button @click="deletePayment(payment)"
+                                                class="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                                                title="Delete Payment">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </template>
+        
+        <!-- Summary -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h4>${{ "%.2f"|format(payments|sum(attribute='amount')) }}</h4>
+                        <p class="mb-0">Total Payments</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h4>{{ payments|length }}</h4>
+                        <p class="mb-0">Total Records</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <h4>${{ "%.2f"|format((payments|sum(attribute='amount')) / payments|length) if payments else 0 }}</h4>
+                        <p class="mb-0">Average Payment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+            <!-- Empty State -->
+            <template x-if="filteredPayments.length === 0 && !loading">
+                <div class="text-center py-16">
+                    <div class="mx-auto h-24 w-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-credit-card text-gray-400 text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No payments found</h3>
+                    <p class="text-gray-500 mb-6" x-text="searchTerm ? 'No payments match your search criteria.' : 'Get started by recording your first payment.'"></p>
+                    <button @click="showCreateModal = true"
+                           class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200">
+                        <i class="fas fa-plus mr-2"></i>Record Payment
+                    </button>
+                </div>
+            </template>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function paymentsApp() {
+    return {
+        // State
+        loading: true,
+        error: null,
+        payments: [],
+        searchTerm: '',
+        showCreateModal: false,
+        showLoginModal: false,
+        loginLoading: false,
+        authToken: localStorage.getItem('authToken'),
+        loginForm: {
+            email: '',
+            password: ''
+        },
+
+        // Computed properties
+        get filteredPayments() {
+            if (!this.searchTerm) return this.payments;
+
+            return this.payments.filter(payment => {
+                const searchLower = this.searchTerm.toLowerCase();
+                return (
+                    payment.id.toString().includes(searchLower) ||
+                    (payment.reference && payment.reference.toLowerCase().includes(searchLower)) ||
+                    (payment.payment_method && payment.payment_method.toLowerCase().includes(searchLower)) ||
+                    (payment.invoice_id && payment.invoice_id.toString().includes(searchLower)) ||
+                    payment.amount.toString().includes(searchLower)
+                );
+            });
+        },
+
+        get totalAmount() {
+            return this.payments.reduce((sum, payment) => sum + parseFloat(payment.amount || 0), 0);
+        },
+
+        get monthlyAmount() {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            return this.payments
+                .filter(payment => {
+                    const paymentDate = new Date(payment.payment_date || payment.created_at);
+                    return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+                })
+                .reduce((sum, payment) => sum + parseFloat(payment.amount || 0), 0);
+        },
+
+        get averageAmount() {
+            return this.payments.length > 0 ? this.totalAmount / this.payments.length : 0;
+        },
+
+        // Methods
+        async init() {
+            await this.checkAuth();
+            if (this.authToken) {
+                await this.fetchPayments();
+            }
+        },
+
+        async checkAuth() {
+            // Check if user is authenticated
+            if (!this.authToken) {
+                this.error = 'Please log in to view payments';
+                this.loading = false;
+                return;
+            }
+        },
+
+        async login() {
+            try {
+                this.loginLoading = true;
+                this.error = null;
+
+                const formData = new FormData();
+                formData.append('username', this.loginForm.email);
+                formData.append('password', this.loginForm.password);
+
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Invalid credentials');
+                }
+
+                const data = await response.json();
+                this.authToken = data.access_token;
+                localStorage.setItem('authToken', this.authToken);
+
+                this.showLoginModal = false;
+                this.loginForm.email = '';
+                this.loginForm.password = '';
+
+                // Fetch payments after successful login
+                await this.fetchPayments();
+
+            } catch (error) {
+                console.error('Login error:', error);
+                this.error = 'Login failed. Please check your credentials.';
+            } finally {
+                this.loginLoading = false;
+            }
+        },
+
+        async fetchPayments() {
+            try {
+                this.loading = true;
+                this.error = null;
+
+                const response = await fetch('/api/v1/payments/', {
+                    headers: {
+                        'Authorization': `Bearer ${this.authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('authToken');
+                        this.authToken = null;
+                        this.error = 'Session expired. Please log in again.';
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                this.payments = data || [];
+
+            } catch (error) {
+                console.error('Error fetching payments:', error);
+                this.error = 'Failed to load payments. Please try again.';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async refreshPayments() {
+            await this.fetchPayments();
+        },
+
+        formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        },
+
+        viewPayment(payment) {
+            // Implement view payment functionality
+            console.log('View payment:', payment);
+            this.showNotification('View payment functionality coming soon', 'info');
+        },
+
+        editPayment(payment) {
+            // Implement edit payment functionality
+            console.log('Edit payment:', payment);
+            this.showNotification('Edit payment functionality coming soon', 'info');
+        },
+
+        async deletePayment(payment) {
+            if (!confirm(`Are you sure you want to delete payment #${payment.id} for $${parseFloat(payment.amount || 0).toFixed(2)}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/payments/${payment.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${this.authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    // Remove payment from local array
+                    this.payments = this.payments.filter(p => p.id !== payment.id);
+                    this.showNotification('Payment deleted successfully', 'success');
+                } else {
+                    throw new Error('Failed to delete payment');
+                }
+            } catch (error) {
+                console.error('Error deleting payment:', error);
+                this.showNotification('Error deleting payment', 'error');
+            }
+        },
+
+        viewInvoice(invoiceId) {
+            // Navigate to invoice view
+            window.location.href = `/invoices/${invoiceId}`;
+        },
+
+        exportPayments() {
+            // Implement export functionality
+            console.log('Export payments');
+            this.showNotification('Export functionality coming soon', 'info');
+        },
+
+        showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    }
+}
+</script>
+{% endblock %}

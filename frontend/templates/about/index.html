@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}About - IDURAR ERP/CRM{% endblock %}
+{% block page_title %}About{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header Section -->
+    <div class="text-center mb-12">
+        <div class="bg-primary-100 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+            <i class="fas fa-info-circle text-primary-600 text-3xl"></i>
+        </div>
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">About IDURAR ERP/CRM</h2>
+        <p class="text-xl text-gray-600">Modern business management solution</p>
+    </div>
+
+    <!-- About Content -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
+        <div class="prose max-w-none">
+            <h3 class="text-2xl font-bold text-gray-900 mb-4">What is IDURAR?</h3>
+            <p class="text-gray-600 mb-6">
+                IDURAR is a comprehensive Enterprise Resource Planning (ERP) and Customer Relationship Management (CRM) 
+                system designed to streamline your business operations. Built with modern technologies, it provides 
+                an intuitive interface for managing customers, invoices, quotes, payments, and more.
+            </p>
+
+            <h3 class="text-2xl font-bold text-gray-900 mb-4">Key Features</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="flex items-start">
+                    <div class="bg-blue-100 rounded-lg p-2 mr-3 mt-1">
+                        <i class="fas fa-users text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Customer Management</h4>
+                        <p class="text-sm text-gray-600">Complete customer database with contact information and history</p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <div class="bg-green-100 rounded-lg p-2 mr-3 mt-1">
+                        <i class="fas fa-file-invoice text-green-600"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Invoice Management</h4>
+                        <p class="text-sm text-gray-600">Create, send, and track invoices with automated workflows</p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <div class="bg-purple-100 rounded-lg p-2 mr-3 mt-1">
+                        <i class="fas fa-file-alt text-purple-600"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Quote Management</h4>
+                        <p class="text-sm text-gray-600">Professional quotes and proposals with conversion tracking</p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <div class="bg-yellow-100 rounded-lg p-2 mr-3 mt-1">
+                        <i class="fas fa-credit-card text-yellow-600"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Payment Processing</h4>
+                        <p class="text-sm text-gray-600">Multiple payment methods and automated payment tracking</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-gray-900 mb-4">Technology Stack</h3>
+            <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div>
+                        <i class="fab fa-python text-3xl text-blue-600 mb-2"></i>
+                        <p class="text-sm font-medium text-gray-900">FastAPI</p>
+                        <p class="text-xs text-gray-600">Backend API</p>
+                    </div>
+                    <div>
+                        <i class="fab fa-js-square text-3xl text-yellow-600 mb-2"></i>
+                        <p class="text-sm font-medium text-gray-900">Alpine.js</p>
+                        <p class="text-xs text-gray-600">Frontend</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-database text-3xl text-green-600 mb-2"></i>
+                        <p class="text-sm font-medium text-gray-900">Supabase</p>
+                        <p class="text-xs text-gray-600">Database</p>
+                    </div>
+                    <div>
+                        <i class="fab fa-html5 text-3xl text-red-600 mb-2"></i>
+                        <p class="text-sm font-medium text-gray-900">Tailwind CSS</p>
+                        <p class="text-xs text-gray-600">Styling</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Information -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">System Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center">
+                <div class="text-2xl font-bold text-primary-600">v1.0.0</div>
+                <div class="text-sm text-gray-600">Version</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-primary-600">2025</div>
+                <div class="text-sm text-gray-600">Release Year</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-primary-600">MIT</div>
+                <div class="text-sm text-gray-600">License</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

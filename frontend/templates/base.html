@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IDURAR ERP/CRM{% endblock %}</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="min-h-screen">
+        {% if user %}
+        <!-- Navigation Sidebar -->
+        <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg border-r border-gray-200">
+            <!-- Logo -->
+            <div class="flex items-center justify-center h-16 px-6 border-b border-gray-200">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-line text-white text-sm"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gray-900">IDURAR</span>
+                </div>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="mt-6 px-3">
+                <div class="space-y-1">
+                    <a href="/" class="group flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200">
+                        <i class="fas fa-tachometer-alt mr-3 text-gray-400 group-hover:text-primary-600"></i>
+                        Dashboard
+                    </a>
+                    <a href="/clients" class="group flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200">
+                        <i class="fas fa-users mr-3 text-gray-400 group-hover:text-primary-600"></i>
+                        Customers
+                    </a>
+                    <a href="/invoices" class="group flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200">
+                        <i class="fas fa-file-invoice mr-3 text-gray-400 group-hover:text-primary-600"></i>
+                        Invoices
+                    </a>
+                    <a href="/quotes" class="group flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200">
+                        <i class="fas fa-file-alt mr-3 text-gray-400 group-hover:text-primary-600"></i>
+                        Quote
+                    </a>
+                    <a href="/payments" class="group flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200">
+                        <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-primary-600"></i>
+                        Payments
+                    </a>
+                    <a href="/payment-modes" class="group flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200">
+                        <i class="fas fa-money-check-alt mr-3 text-gray-400 group-hover:text-primary-600"></i>
+                        Payments Mode
+                    </a>
+                    <a href="/taxes" class="group flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200">
+                        <i class="fas fa-percentage mr-3 text-gray-400 group-hover:text-primary-600"></i>
+                        Taxes
+                    </a>
+                    <a href="/settings" class="group flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200">
+                        <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-primary-600"></i>
+                        Settings
+                    </a>
+                    <a href="/about" class="group flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200">
+                        <i class="fas fa-info-circle mr-3 text-gray-400 group-hover:text-primary-600"></i>
+                        About
+                    </a>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="ml-64">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <div class="flex-1">
+                        <h1 class="text-2xl font-semibold text-gray-900">{% block page_title %}Dashboard{% endblock %}</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <!-- Notifications -->
+                        <button class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-bell text-lg"></i>
+                        </button>
+                        <!-- User Menu -->
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-medium text-gray-700">{{ user.full_name or user.email }}</span>
+                        </div>
+                        <!-- Logout -->
+                        <a href="/logout" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-sign-out-alt text-lg"></i>
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="p-6">
+                <!-- Flash Messages -->
+                {% if messages %}
+                    <div class="mb-6 space-y-3">
+                        {% for message in messages %}
+                            <div class="p-4 rounded-lg border {% if message.category == 'error' %}bg-red-50 border-red-200 text-red-800{% elif message.category == 'success' %}bg-green-50 border-green-200 text-green-800{% elif message.category == 'warning' %}bg-yellow-50 border-yellow-200 text-yellow-800{% else %}bg-blue-50 border-blue-200 text-blue-800{% endif %}">
+                                <div class="flex items-center">
+                                    <i class="fas {% if message.category == 'error' %}fa-exclamation-circle{% elif message.category == 'success' %}fa-check-circle{% elif message.category == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                                    {{ message.text }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Page Content -->
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+        {% else %}
+        <!-- Login Page Content (when user is not logged in) -->
+        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-900">
+            {% block login_content %}{% endblock %}
+        </div>
+        {% endif %}
+    </div>
+
+    {% block extra_js %}{% endblock %}
+
+    <script>
+        // Add active state to current navigation item
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('nav a');
+
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.remove('text-gray-700', 'hover:bg-primary-50', 'hover:text-primary-700');
+                    link.classList.add('bg-primary-100', 'text-primary-700', 'border-r-2', 'border-primary-600');
+                    const icon = link.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('text-gray-400');
+                        icon.classList.add('text-primary-600');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
