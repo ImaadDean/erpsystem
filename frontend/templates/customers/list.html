@@ -433,7 +433,7 @@ function clientsApp() {
                 this.loading = true;
                 this.error = null;
 
-                const response = await fetch('/api/v1/dashboard/customers', {
+                const response = await fetch('/clients', {
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -444,7 +444,13 @@ function clientsApp() {
                 }
 
                 const data = await response.json();
-                this.clients = data || [];
+                
+                // Handle the new JSON structure
+                if (data.success && data.result) {
+                    this.clients = data.result;
+                } else {
+                    this.clients = [];
+                }
 
             } catch (error) {
                 console.error('Error fetching clients:', error);

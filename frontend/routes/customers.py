@@ -33,3 +33,13 @@ async def view_customer_page(request: Request, customer_id: int, user: dict = De
         "customer_id": customer_id,
         "user": user
     })
+
+@router.get("/clients-table", response_class=HTMLResponse)
+async def clients_table_page(request: Request):
+    """Clients table page (no auth required)"""
+    # Mock user for template
+    mock_user = {"id": 1, "name": "Demo User", "email": "demo@example.com"}
+    return templates.TemplateResponse("customers/list.html", {
+        "request": request,
+        "user": mock_user
+    })

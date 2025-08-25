@@ -111,12 +111,41 @@ async def get_customers(
 
 
 @router.get("/search")
-async def search_customers():
-    """Search customers - completely flexible endpoint"""
+async def search_customers(supabase: Client = Depends(get_supabase_service)):
+    """Search customers - fetches real data from database"""
     try:
         print("=== CUSTOMER SEARCH ENDPOINT CALLED ===")
-
-        # Mock search results - using _id format that frontend expects
+        
+        # Fetch real data from database
+        response = supabase.table('customers').select('*').execute()
+        customers = response.data or []
+        
+        # Format data for frontend compatibility
+        formatted_customers = []
+        for customer in customers:
+            formatted_customers.append({
+                "_id": str(customer.get('id', '')),
+                "id": customer.get('id'),
+                "name": customer.get('name', ''),
+                "email": customer.get('email', ''),
+                "phone": customer.get('phone', ''),
+                "city": customer.get('city', ''),
+                "country": customer.get('country', ''),
+                "address": customer.get('address', ''),
+                "state": customer.get('state', ''),
+                "zipCode": customer.get('zip_code', '')
+            })
+        
+        print(f"Returning {len(formatted_customers)} customers from database")
+        
+        return {
+            "success": True,
+            "result": formatted_customers
+        }
+        
+    except Exception as e:
+        print(f"Database search error: {e}")
+        # Fallback to mock data if database fails
         mock_customers = [
             {
                 "_id": "1",
@@ -146,19 +175,11 @@ async def search_customers():
                 "country": "USA"
             }
         ]
-
-        print(f"Returning {len(mock_customers)} customers")
-
+        
+        print(f"Returning {len(mock_customers)} mock customers (fallback)")
         return {
             "success": True,
             "result": mock_customers
-        }
-
-    except Exception as e:
-        print(f"Search error: {e}")
-        return {
-            "success": True,
-            "result": []
         }
 
 

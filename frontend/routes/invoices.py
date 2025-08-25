@@ -16,3 +16,13 @@ async def invoices_page(request: Request, user: dict = Depends(get_current_user)
         "request": request,
         "user": user
     })
+
+@router.get("/invoices-table", response_class=HTMLResponse)
+async def invoices_table_page(request: Request):
+    """Invoices table page (no auth required)"""
+    # Mock user for template
+    mock_user = {"id": 1, "name": "Demo User", "email": "demo@example.com"}
+    return templates.TemplateResponse("invoices/list.html", {
+        "request": request,
+        "user": mock_user
+    })
